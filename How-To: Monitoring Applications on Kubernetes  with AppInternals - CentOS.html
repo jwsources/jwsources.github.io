@@ -1,0 +1,678 @@
+<!doctype html>
+<html><head><title>How-To: Monitoring Applications on Kubernetes  with AppInternals - CentOS</title><meta charset="UTF-8"><link href="http://fonts.googleapis.com/css?family=Crimson+Text:400,400italic,700,700italic|Roboto:400,700,700italic,400italic" rel="stylesheet" type="text/css"><style>/*
+ * Copyright 2014 Quip
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+
+body {
+    font-size: 15px;
+    color: #333;
+    background: white;
+    padding: 60px 95px;
+    max-width: 900px;
+    margin: 0 auto;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern";
+    font-kerning: normal;
+    -moz-font-feature-settings: "kern";
+    -webkit-font-feature-settings: "kern";
+}
+
+/* Headings */
+h1,
+h2,
+h3,
+th {
+    font-family: Roboto, sans-serif;
+    font-weight: 700;
+    margin: 0;
+    margin-top: 1.25em;
+    margin-bottom: 0.75em;
+}
+
+h1 {
+    font-size: 35px;
+    line-height: 42px;
+}
+
+h1:first-child {
+    margin-top: 0;
+}
+
+h2 {
+    font-size: 18px;
+    line-height: 22px;
+}
+
+h3 {
+    text-transform: uppercase;
+    font-size: 13px;
+    line-height: 16px;
+}
+
+/* Body text */
+body,
+p,
+ul,
+ol,
+td {
+    font-family: "Crimson Text", serif;
+    font-size: 16px;
+    line-height: 20px;
+}
+
+blockquote,
+q {
+    display: block;
+    margin: 1em 0;
+    font-style: italic;
+}
+
+blockquote a,
+q a {
+    text-decoration: underline;
+}
+
+blockquote {
+    padding-left: 10px;
+    border-left: 4px solid #a6a6a6;
+}
+
+q {
+    color: #a6a6a6;
+    line-height: 40px;
+    font-size: 24px;
+    text-align: center;
+    quotes: none;
+}
+
+q a {
+    color: #a6a6a6;
+}
+
+code,
+pre {
+    font-family: Consolas, "Liberation Mono", Menlo, "Courier Prime Web",
+        Courier, monospace;
+    background: #f2f2f2;
+}
+
+code {
+    padding: 1px;
+    margin: 0 -1px;
+    border-radius: 3px;
+}
+
+pre {
+    display: block;
+    line-height: 20px;
+    text-shadow: 0 1px white;
+    padding: 5px 5px 5px 30px;
+    white-space: nowrap;
+    position: relative;
+    margin: 1em 0;
+}
+
+pre:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 15px;
+    border-left: solid 1px #dadada;
+}
+
+/* Lists */
+div[data-section-style="5"],
+div[data-section-style="6"],
+div[data-section-style="7"] {
+    margin: 12px 0;
+}
+
+ul {
+    padding: 0 0 0 40px;
+}
+
+ul li {
+    margin-bottom: 0.4em;
+}
+
+/* Bulleted list */
+div[data-section-style="5"] ul {
+    list-style-type: disc;
+}
+div[data-section-style="5"] ul ul {
+    list-style-type: circle;
+}
+div[data-section-style="5"] ul ul ul {
+    list-style-type: square;
+}
+div[data-section-style="5"] ul ul ul ul {
+    list-style-type: disc;
+}
+div[data-section-style="5"] ul ul ul ul ul {
+    list-style-type: circle;
+}
+div[data-section-style="5"] ul ul ul ul ul ul {
+    list-style-type: square;
+}
+
+/* Numbered list */
+div[data-section-style="6"] ul {
+    list-style-type: decimal;
+}
+div[data-section-style="6"] ul ul {
+    list-style-type: lower-alpha;
+}
+div[data-section-style="6"] ul ul ul {
+    list-style-type: lower-roman;
+}
+div[data-section-style="6"] ul ul ul ul {
+    list-style-type: decimal;
+}
+div[data-section-style="6"] ul ul ul ul ul {
+    list-style-type: lower-alpha;
+}
+div[data-section-style="6"] ul ul ul ul ul ul {
+    list-style-type: lower-roman;
+}
+
+/* Checklist */
+div[data-section-style="7"] ul {
+    list-style-type: none;
+}
+
+div[data-section-style="7"] ul li:before {
+    content: "\2610";
+    position: absolute;
+    display: inline;
+    margin-right: 1.2em;
+    margin-left: -1.2em;
+}
+
+div[data-section-style="7"] ul li.parent:before {
+    content: "";
+}
+
+div[data-section-style="7"] ul li.parent {
+    font-weight: bold;
+}
+
+div[data-section-style="7"] ul li.checked {
+    text-decoration: line-through;
+}
+
+div[data-section-style="7"] ul li.checked:before {
+    content: "\2611";
+    text-decoration: none;
+}
+
+/* Tables */
+div[data-section-style="8"] {
+    margin: 12px 0;
+}
+
+table {
+    border-spacing: 0;
+    border-collapse: separate;
+    border: solid 1px #bbb;
+    table-layout: fixed;
+    position: relative;
+}
+
+table th,
+table td {
+    padding: 2px 2px 0;
+    min-width: 1.5em;
+    word-wrap: break-word;
+}
+
+table th {
+    border-bottom: 1px solid #c7cbd1;
+    background: #f2f2f2;
+    font-weight: bold;
+    vertical-align: bottom;
+    color: #3a4449;
+    text-align: center;
+}
+
+table td {
+    padding-top: 0;
+    border-left: 1px solid #c7cbd1;
+    border-top: 1px solid #c7cbd1;
+    vertical-align: top;
+}
+
+table td.bold {
+    font-weight: bold;
+}
+
+table td.italic {
+    font-style: italic;
+}
+
+table td.underline {
+    text-decoration: underline;
+}
+
+table td.strikethrough {
+    text-decoration: line-through;
+}
+
+table td.underline.strikethrough {
+    text-decoration: underline line-through;
+}
+
+table td:first-child {
+    border-left: hidden;
+}
+
+table tr:first-child td {
+    border-top: hidden;
+}
+
+/* Images */
+div[data-section-style="11"] {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+div[data-section-style="11"][data-section-float="0"] {
+    clear: both;
+    text-align: center;
+}
+
+div[data-section-style="11"][data-section-float="1"] {
+    float: left;
+    clear: left;
+    margin-right: 20px;
+}
+
+div[data-section-style="11"][data-section-float="2"] {
+    float: right;
+    clear: right;
+    margin-left: 20px;
+}
+
+div[data-section-style="11"] img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: auto;
+}
+
+hr {
+    width: 70px;
+    margin: 20px auto;
+}
+
+/* Apps */
+div[data-section-style="19"].placeholder {
+    margin: 0.8em auto;
+    padding: 4px 0;
+    display: block;
+    color: #3d87f5;
+    text-align: center;
+    border: 1px solid rgba(41, 182, 242, 0.2);
+    border-radius: 3px;
+    background: #e9f8fe;
+    font-family: Roboto, sans-serif;
+}
+
+div[data-section-style="19"].first-party-element {
+    margin-bottom: 10px;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+div[data-section-style="19"].first-party-element.kanban {
+    background-image: url("https://quip-cdn.com/nK0hSyhsb4jrLIL2s5Ma-g");
+    height: 166px;
+}
+
+div[data-section-style="19"].first-party-element.calendar {
+    background-image: url("https://quip-cdn.com/OYujqLny03RILxcLIiyERg");
+    height: 244px;
+}
+
+div[data-section-style="19"].first-party-element.poll {
+    background-image: url("https://quip-cdn.com/fbIiFrcKGv__4NB7CBfxoA");
+    height: 116px;
+}
+
+div[data-section-style="19"].first-party-element.countdown {
+    background-image: url("https://quip-cdn.com/3bPhykD2dBei9sSjCWteTQ");
+    height: 96px;
+}
+
+div[data-section-style="19"].first-party-element.process_bar {
+    background-image: url("https://quip-cdn.com/ybQlHnHEIIBLog5rZmYs_w");
+    height: 36px;
+}
+
+div[data-section-style="19"].first-party-element.project_tracker {
+    background-image: url("https://quip-cdn.com/OFQU087b4Mxzz1ZaHwtjXA");
+    height: 164px;
+}
+
+div[data-section-style="19"] img {
+    margin: 0.5em;
+}
+
+div[data-section-style="19"] img.masked-image {
+    margin: 0;
+    transform-origin: top left;
+}
+
+div[data-section-style="19"] .image-mask {
+    position: relative;
+    overflow: hidden;
+}
+</style></head><body><h1 id='DTPACA3w1Mo'>How-To: Monitoring Applications on Kubernetes  with AppInternals - CentOS</h1>
+
+The goal of this document is to describe the installation and configuration of Riverbed AppInternals for the monitoring of a Java application running on one of more Kubernetes nodes.<br/>
+
+<br/>
+
+For the purpose of this guide trial version of Riverbed AppInternals and Microsoft Azure were used:<br/>
+
+<div data-section-style='5'><ul id='DTPACAFRXHa'><li id='DTPACA42fQ4' class='' value='1'><a href="https://www.steelcentral.net/auth/signup">14-days of SteelCentral AppInternals</a> for monitoring up to 10 VMs;
+
+<br/></li><li id='DTPACAR2Per' class=''><a href="https://azure.microsoft.com/en-us/free/">Microsoft Azure 12 months of free services</a> and $200 credit.
+
+<br/></li></ul></div>The Java application is a version of the standard Java demo application called JPetstore, the sample we use is built on MyBatis 3, Spring Boot and Thymeleaf 3. Review <a href="https://jpetstore.cfapps.io/">https://jpetstore.cfapps.io/</a>for a running deployment and and link to the source code on Github.<br/>
+
+<br/>
+
+Other resources used where the official documentation for:<br/>
+
+<div data-section-style='5'><ul id='DTPACA0Y8Xr'><li id='DTPACAkwqHV' class='' value='1'>Riverbed SteelCentral SaaS, <a href="http://doc.steelcentral.net/">http://doc.steelcentral.net</a>;
+
+<br/></li><li id='DTPACAAH03a' class=''>Microsoft Azure, <a href="https://docs.microsoft.com/en-gb/azure/">https://docs.microsoft.com/en-gb/azure/</a>;
+
+<br/></li><li id='DTPACA3c4iF' class=''>Kubernetes, <a href="https://kubernetes.io/docs/home/">https://kubernetes.io/docs/home/</a> where setup was used, <a href="https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/">https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/</a>.
+
+<br/></li></ul></div>And an online guide for setting up a Kubernetes Cluster with CentOS which has the same architecture as RedHat Linux:<br/>
+
+<div data-section-style='5'><ul id='DTPACAwQzcO'><li id='DTPACAeEYJ6' class='' value='1'><a href="https://www.howtoforge.com/tutorial/centos-kubernetes-docker-cluster/">How to Install a Kubernetes Docker Cluster on CentOS 7</a>
+
+<br/></li></ul></div><h3 id='DTPACALiyAn'>Azure Linux VM provisioning</h3>
+
+To be able to built a Kubernetes environment initially a Linux VM is needed. For this guide a Linux VM on Azure will be used. An Azure subscription is required, if necessary sign up for the trial via the link provided.<br/>
+
+<div data-section-style='7'><ul id='DTPACAI7lNo'><li id='DTPACACbk4j' class='' value='1'>Login to the Azure Portal
+
+<br/></li><li id='DTPACA1Lvi9' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/0JZBiOYcOj7doPSCVeWa_A?a=BYO1nWaE2BTN6qqglyg32f0dGXBr1sFvbILsEMvGXvoa' id='DTPACA1Lvi9' alt='' width='800' height='202'></img></span></li><li id='DTPACAIiBnf' class=''>'Create a resource' on the top left
+
+<br/></li><li id='DTPACAMpQ0O' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/m_yDO86N8KqMl3D_Iv7W-A?a=6R0NlZ2MUUpc7GYmYhU8T8AZPVAp4b2MFA43cBSQ2ksa' id='DTPACAMpQ0O' alt='' width='756' height='191'></img></span></li><li id='DTPACAAIOs8' class=''>After 'Create a resource' is selected search for 'CentOS-based 7.5' and click 'Create
+
+<br/></li><li id='DTPACAtTdYN' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/Bj-7Sl8StCgF3CC8d7rzDQ?a=VuQ0vbrFSKLxJ4VHbzqxmqG1TLigntyRkYGihXeHehka' id='DTPACAtTdYN' alt='' width='800' height='269'></img></span></li></ul></div><blockquote id='DTPACAEneet'>An interview process for provisioning of a Linux VM is entered. Go through the process to provision a VM where Kubernetes will be installed as a one-node cluster. For more information review the Microsoft Azure documentation with links to Microsoft Learn, <a href="https://docs.microsoft.com/en-gb/azure/virtual-machines/?WT.mc_id=AzPortal_VM_modern_CmdBar_DocLink">https://docs.microsoft.com/en-gb/azure/virtual-machines/?WT.mc_id=AzPortal_VM_modern_CmdBar_DocLink</a>.</blockquote>
+
+<br/>
+
+<div data-section-style='7'><ul id='DTPACAAA1no'><li id='DTPACAqxwNU' class='' value='1'>Make sure 'CentOS-based 7.5' is selected as the Image to be provisioned
+
+<br/></li><li id='DTPACAIIGme' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/mDLTxWmh-PXxGL3L7KmLcg?a=Snn9voP8etrNSnGooAN3XZYTzEaZL1TDwvaftSsip34a' id='DTPACAIIGme' alt='' width='772' height='680'></img></span></li><li id='DTPACAvPVlr' class=''>Pick (or create) a Resource group
+
+<br/></li><li id='DTPACAN1WQH' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/tOX-Jbb9y2lZ0r6qKupPEw?a=fTa43OgMrv326nayBVZo3Er2yYWOIiLyeHbxGOvWfTsa' id='DTPACAN1WQH' alt='' width='800' height='266'></img></span></li><li id='DTPACAki9Z3' class=''>Set a name for the VM and pick a Region
+
+<br/></li><li id='DTPACAVbpcG' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/VJFBpnVqCZcGI3vogjYz7A?a=kkMmwmNdHB9yqegGcnL0zVMWIf9aVZPJML50FiBgs7Ya' id='DTPACAVbpcG' alt='' width='758' height='284'></img></span></li><li id='DTPACAmSrUP' class=''>Change the size of the VM to one that fits our purpose, in this example 'B2s' is used
+
+<br/></li><li id='DTPACApEGVX' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/J_Dsbm2mz2dgUrrb4gO55g?a=NFmtgog36f8xdV4nbXaHtJehvYBPGzp10vNZMgMtMaka' id='DTPACApEGVX' alt='' width='754' height='81'></img></span></li><li id='DTPACABmGc8' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/MULOZudEh6BhG9RFN3EbYw?a=an2Fya6YeHhaeSCfxM9PpBoTwJeInMi0Xjwk5nCObvoa' id='DTPACABmGc8' alt='' width='786' height='342'></img></span></li><li id='DTPACAZLVRm' class=''>Set a username and a SSH public key for the Administrator account
+
+<br/></li><li id='DTPACAAfJ1n' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/Jq8Sq-w29SsFNjXNYtguBQ?a=2RkBgzuvVSkauyoP715yhDxqoxpJwJNryHEvh4WjKgAa' id='DTPACAAfJ1n' alt='' width='768' height='192'></img></span></li></ul></div><blockquote id='DTPACA8yddZ'>For the SSH key a RSA public key in single-line or multi-line PEM format is needed. On MacOS or Linux a key can be generated using ssh-keygen, on Windows use PuTTYgen.</blockquote>
+
+<blockquote id='DTPACAAN70j'><code>ssh-keygen -t rsa -C "demo"</code></blockquote>
+
+<div data-section-style='7'><ul id='DTPACAtAeo8'><li id='DTPACAQDah8' class='' value='1'>Enter the key found in the generated file
+
+<br/></li><li id='DTPACA6HSnf' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/7YTa64aNDykgtNbu5rihnw?a=OC0FUYi4vauLdzk0CeWaVMW8hgCZQKglg5WWE2eDSbUa' id='DTPACA6HSnf' alt='' width='757' height='224'></img></span></li><li id='DTPACASWJQk' class=''>Open up access to port 80 and 22 for SSH access, you might include other ports as well
+
+<br/></li><li id='DTPACA76vwk' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/T8orUWoGko95JWEI1pJ8ng?a=yBYganlJYJjjG58SxW5Tl3c8W2SoyaGyVsnf5CSTaaoa' id='DTPACA76vwk' alt='' width='755' height='233'></img></span></li><li id='DTPACANiVgx' class=''>Add additional disk capacity
+
+<br/></li><li id='DTPACABxIP1' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/uRcOb7ifl2qMIuYsopd1Cg?a=07zDa9113Lc5ts4IsThk5Ms4h8rKyuTwWaUVdv4vNcAa' id='DTPACABxIP1' alt='' width='759' height='600'></img></span></li><li id='DTPACAjOzp7' class=''>Review all other options if necessary and 'Create' the VM
+
+<br/></li><li id='DTPACA0ZyoH' class=''><span data-section-style='11' class='tall' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/QQXmjKVz8VBAVqJ9zaoc9g?a=VgfXyzr7KYA6eRUj8aNn7Md0sgqDBfZLb7v8YcqwjVUa' id='DTPACA0ZyoH' alt='' width='725' height='815'></img></span></li></ul></div><blockquote id='DTPACADkQgW'>The configiration of the created can be downloaded as a template for later use.</blockquote>
+
+<div data-section-style='7'><ul id='DTPACAm9ugR'><li id='DTPACAEh7kT' class='' value='1'>Click 'Create' and wait for the deployment to complete
+
+<br/></li><li id='DTPACAN24Rw' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/RfRxmjtwIrgCBr_qPTZuXA?a=zORMQgdr5y33pVDjK72LWa2M1xa6nHZ8hcDc2XsoJSca' id='DTPACAN24Rw' alt='' width='800' height='468'></img></span></li><li id='DTPACAZeTqm' class=''>If available click 'Go to resource'
+
+<br/></li><li id='DTPACATjFNq' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/6lNL21OWIHrHeyEzQn3w8w?a=WIzFBhOzc3nfBltfGK2XCFbGRalhZsLtAbm0vEjXnC0a' id='DTPACATjFNq' alt='' width='768' height='483'></img></span></li><li id='DTPACA5oPGj' class=''>Review the details, like Private and Public IP rom the VM created
+
+<br/></li><li id='DTPACAFRcjJ' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/6TOQsXmAuyNpAfKVA82mdg?a=iF4DzPguZ5z3AbxfC9iEJQEWy6D9a7CPfvIBag9BLMka' id='DTPACAFRcjJ' alt='' width='800' height='216'></img></span></li><li id='DTPACAtT4YY' class=''>Click 'Connect' to find the details on how to connect to the VM shell
+
+<br/></li><li id='DTPACAAMT2Q' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/l5z_zBra4sX6-ka50v4wNA?a=khKwczi4ZPMqRDpKiaFMhxewfHlbl88wNnoQvcao3R8a' id='DTPACAAMT2Q' alt='' width='800' height='208'></img></span></li><li id='DTPACASp7Y9' class=''>Use the SSH command to login to the Linux host and accept the key
+
+<br/></li></ul></div><blockquote id='DTPACAo5Tkx'>Make sure SSH is started with the -i option pointing to the non-public rsa key generated previously.</blockquote>
+
+<blockquote id='DTPACAeGUc3'>ssh -i /Users/demo/.ssh/demo_rsa demo@52.138.218.96</blockquote>
+
+<div data-section-style='7'><ul id='DTPACAq52v2'><li id='DTPACA7PZCT' class='' value='1'><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/hafoze7iJNidJ1UjPj81yA?a=A8XsHZ0ULDHJSjSnm2cbVTKaKEQYSNVP4eX9QjBSUT8a' id='DTPACA7PZCT' alt='' width='599' height='74'></img></span></li><li id='DTPACArlns1' class=''>Check successful login and run <code>sudo su -</code> for root access
+
+<br/></li><li id='DTPACAKkW26' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/zUSDZIqhmTjShC0cwHkeJw?a=XGfPTy3cuZfja6X9jHPZgaeKnNhq0J8VeELSOYnCvVYa' id='DTPACAKkW26' alt='' width='695' height='142'></img></span></li></ul></div><blockquote id='DTPACA0AAGC'>To fix the LC_TYPE locale error edit /etc/locale.conf and make sure it contains<br>LANG="en_US.UTF-8"<br>LC_CTYPE="en_US.UTF-8"</blockquote>
+
+<div data-section-style='7'><ul id='DTPACAGQxTF'><li id='DTPACA71SjF' class='' value='1'>Check where the additional disk is mounted; in the below example sdb1 is mounted under /mnt/resource
+
+<br/></li><li id='DTPACA8MfBe' class=''>root@JPetDemo:~# df
+
+<br/></li><li id='DTPACABZv5y' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/ZB3GYjte5Au7xSEiMuOXYQ?a=FgkrQJhcFuyKriAdqDno4mlLpJsX6hc8YsMjK4J8DdEa' id='DTPACABZv5y' alt='' width='468' height='195'></img></span></li></ul></div><h3 id='DTPACAprb7W'>Kubernetes Installation</h3>
+
+<div data-section-style='7'><ul id='DTPACAwpRpV'><li id='DTPACAJ23QI' class='' value='1'>Start updating CentOS and installing required packages, use the root user privileges (take coffee)
+
+<br/></li><li id='DTPACAYfZ0i' class=''>sudo su -<br># Update and upgrade CentOS<br>yum check-updates<br><code>yum update -y</code>
+
+<br/></li><li id='DTPACAP1npW' class=''>For simplicity we disable SELinux
+
+<br/></li><li id='DTPACAnqZND' class=''># Check SELinux status<br><code>sestatus<br></code><br># Disable SELinux for the session (permissive) and after reboot (disabled)<br><code>setenforce 0<br></code><code>sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config<br></code><br># Check SELinux status<br><code>sestatus</code>
+
+<br/></li><li id='DTPACAfP6Mv' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/u7NIDFrXb3PORDufLb_zZQ?a=OeeI1AqS5Zg6WV9l4GiakB45azWr0E0tsFvbVFaSTwwa' id='DTPACAfP6Mv' alt='' width='603' height='172'></img></span></li><li id='DTPACA4ATf6' class=''>Install and start Docker
+
+<br/></li><li id='DTPACAQE8ra' class=''># Install Docker CE repos and Docker itself<br> <code><code><code>yum-config-manager \<br>--add-repo https://download.docker.com/linux/centos/docker-ce.repo</code><br></code>yum install -y docker-ce </code>&amp;&amp; systemctl enable docker &amp;&amp; \<br>systemctl start docker<br>docker version<br>systemctl status docker
+
+<br/></li><li id='DTPACABOVDT' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/FHBw3coOVRwmvSMJlfCkxg?a=sSxjM4VS2gmmMGPnbQmMJynOgNLMXQjMKByytnNR0EIa' id='DTPACABOVDT' alt='' width='800' height='397'></img></span></li><li id='DTPACA7mRli' class=''>Now run the below commands to get Kubernetes installed
+
+<br/></li><li id='DTPACADakK9' class=''># Enable br_netfilter Kernel Module<br><code>modprobe br_netfilter<br>echo '1' &gt; /proc/sys/net/bridge/bridge-nf-call-iptables</code><br><br># Turn swap off<br>swapoff -a<br>sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab<br><br># Install Kubernetes<br><code>sudo bash -c 'cat &lt;&lt;EOF &gt; /etc/yum.repos.d/kubernetes.repo<br>[kubernetes]<br>name=Kubernetes<br>baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64<br>enabled=1<br>gpgcheck=1<br>repo_gpgcheck=1<br>gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg<br>exclude=kube*<br>EOF'</code><br>yum install -y kubelet kubeadm kubectl <code>--disableexcludes=kubernetes</code><br><br># Make sure kubelet will use the same cgroup driver as Docker<br>sed -i \<br>'0,/ExecStart=/s//Environment="KUBELET_EXTRA_ARGS=--cgroup-driver=cgroupfs"\n&amp;/' \<br>/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf<br><br># Enable kubelet as a service<br>systemctl enable kubelet &amp;&amp; systemctl start kubelet<br><br># Open Firewall (Optional, relevant if firewall is running)<br><code>firewall-cmd --permanent --add-port=6443/tcp &amp;&amp; sudo firewall-cmd --permanent \<br>--add-port=10250/tcp &amp;&amp; sudo firewall-cmd --reload<br></code><br># Set IPTables settings<br>bash -c 'cat &lt;&lt;EOF &gt;  /etc/sysctl.d/k8s.conf<br>net.bridge.bridge-nf-call-ip6tables = 1<br>net.bridge.bridge-nf-call-iptables = 1<br>EOF'<br>sysctl --system<br>lsmod | grep br_netfilter
+
+<br/></li></ul></div><blockquote id='DTPACAHdhUD'>A multi-node cluster can also be created, therefor the above steps are to be repeated on each Linux VM serving as a node.. Use the kubeadm join command you'll get after the kubeadm init. Only use kubeadm init on the Master.</blockquote>
+
+<div data-section-style='7'><ul id='DTPACAl3nKY'><li id='DTPACAGl4Xh' class='' value='1'>Now get the ip address and hostname from the server as input for the below command to create the cluster configuration on the Kubernetes Master 
+
+<br/></li><li id='DTPACAqIlQe' class=''># Pull images to speedup config<br>kubeadm config images pull<br><br># Get IP<br>IP=`ifconfig eth0 | grep inet | awk '{print $2}'| cut -f2 -d:`<br><br># Get HOSTNAME<br>HOST=$(hostname -s)<br><br># Use output in the below command to setup the Cluster to run as Master and Node<br>kubeadm init --apiserver-advertise-address=$IP --apiserver-cert-extra-sans=$IP --node-name $HOST \<br>--pod-network-cidr 192.168.0.0/16
+
+<br/></li></ul></div><blockquote id='DTPACAuTnCJ'>At the end of the installation a command is displayed to add additional nodes to the cluster. In the case the cluster will have additional nodes keep the kubeadm join command since it has a unique token and certificate. <br><br>If the Kubernetes installation fails recheck and redo all the previous activities. To reset the cluster configuration the below and then execute the above kubeadm init again                                                                                                                               <code>sudo kubeadm reset<br>rm -rf /var/lib/cni/<br>sudo rm -rf /var/lib/cni/<br><br>systemctl daemon-reload<br><br>systemctl restart kubelet</code></blockquote>
+
+<div data-section-style='7'><ul id='DTPACAb57cP'><li id='DTPACAJFtdK' class='' value='1'>Make sure you get the message shown below to indicate the configuration was done successfully
+
+<br/></li><li id='DTPACAAjL6Z' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/hdES-Sn5uMASVcaRZ9XqPw?a=M5nPkWsJwHTNmoClHoMu03vccGj43uaBi8N5Nnh7mvQa' id='DTPACAAjL6Z' alt='' width='601' height='198'></img></span></li><li id='DTPACAT8XHz' class=''>Continue with the below commands to setup access to kubectl for your local user
+
+<br/></li><li id='DTPACAUnKnq' class=''># Copy admin credentials to local user<br>mkdir -p /home/demo/.kube<br>cp -i /etc/kubernetes/admin.conf /home/demo/.kube/config<br>chown demo:demo /home/demo/.kube/config<br><br># To run kubectl as root, feel free to add to ~/.bash_profile<br>export KUBECONFIG=/etc/kubernetes/admin.conf
+
+<br/></li><li id='DTPACASe626' class=''>Switch to the local user by typing <code>exit</code>
+
+<br/></li><li id='DTPACAGvQnF' class=''># Install networking<br>kubectl apply -f \<br>https://docs.projectcalico.org/v3.6/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml<br><br># remove master role taint<br>kubectl taint nodes --all node-role.kubernetes.io/master-
+
+<br/></li><li id='DTPACAV9zPX' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/dRxByMgUwmWQg9TfyyWFfA?a=wNjQB3lDFSKIxM68BBBosdZ2Tueg8R9RGHseeRkczjka' id='DTPACAV9zPX' alt='' width='800' height='360'></img></span></li><li id='DTPACAV19k2' class=''>Check the installation, and makes sure it's looking 'Healthy' and 'Running'
+
+<br/></li><li id='DTPACABiEwR' class=''># Get componentstats<br>kubectl get componentstatus<br><br># Get all resources<br>kubectl get all --all-namespaces<br><br># Get all services<br>kubectl get services
+
+<br/></li></ul></div><div data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/9VPcs0HrD78zqjR6LNHJyw?a=FUqazRFCT6V1nDz6EqRyAQ8cHApBeLIJfLk2HUIe5Rsa' id='DTPACAvbVne' alt='' width='436' height='92'></img></div><div data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/7tf2rPfMVbFqw6BWk41xuQ?a=UmTnQODTkbEUeSvB6LxUVaJNpx45v5PdfNSoYvJlRJwa' id='DTPACAuaeDx' alt='' width='800' height='395'></img></div><div data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/r59JM5r-EM7Loh0555mEpw?a=boaetw8k9yDYgPrCtoonuDFI4qr33aSYj0Ao5Hej4c0a' id='DTPACA8U6Pn' alt='' width='484' height='56'></img></div><h3 id='DTPACAUM3mY'>AppInternals Installation</h3>
+
+<div data-section-style='7'><ul id='DTPACA6YJlW'><li id='DTPACACvsYw' class='' value='1'>Switch back to the root user
+
+<br/></li><li id='DTPACABcecw' class=''>demo@JPetDemo:~$ sudo su -<br>root@JPetDemo:~#
+
+<br/></li><li id='DTPACAiLyZR' class=''>Create a new directory on the second disk
+
+<br/></li><li id='DTPACA7OeBb' class=''>root@JPetDemo:~# cd /mnt/resource<br>root@JPetDemo:~# mkdir dl<br>root@JPetDemo:~# cd dl
+
+<br/></li><li id='DTPACAdtwpS' class=''>Download the latest AppInternals agent
+
+<br/></li></ul></div><blockquote id='DTPACAv31QY'>The latest agent binary and needed ID can be found in the SteelCentral SaaS tenant under Configure &gt; Install Agents. <br>Right-click the Linux Latest Agent to get the correct URL</blockquote>
+
+<div data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/02tzjliE-TK3QAc923Zmrw?a=9jutCmaB8ejuLmBOI53yF6w2LntQlzmhz6MUQ7QjpNga' id='DTPACA0SYEy' alt='' width='732' height='352'></img></div><div data-section-style='7'><ul id='DTPACA2QeiL'><li id='DTPACAE1ioZ' class='' value='1'>wget http://agent-download.steelcentral.net/10.21/saas-latest/appinternals_agent_latest_linux.gz
+
+<br/></li><li id='DTPACAmy5ha' class=''>Unzip and make the file executable to start the installation
+
+<br/></li><li id='DTPACA3mNbS' class=''>gunzip appinternals_agent_latest_linux.gz &amp;&amp; \<br>chmod +x appinternals_agent_latest_linux<br><br># Start installer<br>./appinternals_agent_latest_linux
+
+<br/></li><li id='DTPACAElMHq' class=''>Type 1 to start the installation and enter to pick the default /tmp directory
+
+<br/></li><li id='DTPACA6vfSH' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/b1n5xplQXZeHt5Z9VrMvLA?a=OafROL14a7qgDYja8erycKtxU0UlDDFnqqOdEbD6Pf0a' id='DTPACA6vfSH' alt='' width='800' height='241'></img></span></li><li id='DTPACAq1myM' class=''>Type 2 to use the SaaS backend and give the SaaS customer ID as input
+
+<br/></li></ul></div><blockquote id='DTPACAi7esx'>The latest agent binary and needed ID can be found in the SteelCentral SaaS tenant under Configure &gt; Install Agents. Copy the Customer Id as input for the dialog.</blockquote>
+
+<div data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/qtmjJCVfvfbln_LHROCfkw?a=7pUJ8W5PzNZMaqzK5ZHTG1QSKD6yDLCHHARsXcjsqA4a' id='DTPACA1QOBa' alt='' width='790' height='88'></img></div><div data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/EeUYSdlKGY_CWhyDMXW_Aw?a=3cJUe6W6EWPeNIFyuJyw7xafxHU1gDmBA4bM5zcCUFwa' id='DTPACAgGfT2' alt='' width='800' height='249'></img></div><div data-section-style='7'><ul id='DTPACA9nfyq'><li id='DTPACAXteqq' class='' value='1'>Install for the root user as administrator and choose to install in /opt
+
+<br/></li><li id='DTPACAeL3xx' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/1fQksVSoeOWhvv1scdzJ4Q?a=aaTZHvXUJJSVy8Bt8PHUB97ab8ySaaueSaqkQ0iZ6WUa' id='DTPACAeL3xx' alt='' width='800' height='123'></img></span></li><li id='DTPACATbS7f' class=''>Don't use a proxy and don't enable Java instrumentation
+
+<br/></li><li id='DTPACAaG1GN' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/UMfLx89sYP8Wr_AbIEWMcg?a=4vedJoCPcJbzDdYsO6d7yGeUqkuZaKbP4jz1Ye4bDqEa' id='DTPACAaG1GN' alt='' width='682' height='310'></img></span></li><li id='DTPACAQAQ1L' class=''>Start the agent
+
+<br/></li><li id='DTPACA1WQz6' class=''>/opt/Panorama/hedzup/mn/bin/agent start
+
+<br/></li><li id='DTPACAHHHod' class=''>Check to see if after a few minutes the agent shows up connected in the Agent List on the SaaS backend via Configure &gt; Agent List
+
+<br/></li><li id='DTPACAEzJ3q' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/IL41w_RWNlbHBFIXUYLMZw?a=lN7PGsecv3mea7J8KVm1QWQIFRgYw9V8arh3maqgBaka' id='DTPACAEzJ3q' alt='' width='800' height='161'></img></span></li></ul></div><h3 id='DTPACAAL1KN'>Prepare JPETStore image</h3>
+
+To run the application on Kubernetes the source need to be packaged in a docker image.<br/>
+
+<div data-section-style='7'><ul id='DTPACADlTzH'><li id='DTPACAEufi5' class='' value='1'>Download sources as the demo user, once again use the second disk
+
+<br/></li><li id='DTPACAc0bWE' class=''>sudo yum install git -y<br># Download the demo app sources from Github<br><code>git clone https://github.com/kazuki43zoo/mybatis-spring-boot-jpetstore.git</code><br>cd mybatis-spring-boot-jpetstore
+
+<br/></li><li id='DTPACAdkvfB' class=''>Create a Dockerfile
+
+<br/></li><li id='DTPACAP6mSM' class=''>touch Dockerfile<br>vim Dockerfile
+
+<br/></li><li id='DTPACAIZP5l' class=''>Add the below lines to the file, type i to enable insert modus
+
+<br/></li><li id='DTPACAnPT4e' class=''>FROM maven:3.6-jdk-11-slim as build<br>WORKDIR /usr/src/java-code/<br>COPY ./ /usr/src/java-code/<br>RUN mvn package <code>-DskipTests</code><br>RUN ls /usr/src/java-code/target<br>FROM openjdk:8-jre-alpine<br>COPY --from=build /usr/src/java-code/target/*jpetstore*.jar /petstore.jar<br><br>EXPOSE 8080<br>ENTRYPOINT ["java", "-Dserver.port=8080", "-jar", "/petstore.jar"]
+
+<br/></li></ul></div><blockquote id='DTPACAaEYEf'>In the above Docketfile port 8080 is used to run Petclinic on, by changing the server.port and EXPOSE parameter a different port can be configured. If port 80 is used it doesn't require a new Azure Firewall rule.</blockquote>
+
+<div data-section-style='7'><ul id='DTPACAqwzCh'><li id='DTPACAjvh1j' class='' value='1'>Save the file, by hitting Escape and typing  :wq and Enter
+
+<br/></li><li id='DTPACAqBY1Y' class=''>Build the image and make it available locally
+
+<br/></li><li id='DTPACAfO0qk' class=''>sudo docker build -t petstore .
+
+<br/></li><li id='DTPACAFeQPE' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/vLNjzqoHB2XGF6yKZJNU3A?a=cnOrNDQ5GyqMJIP9r74rsSrQOad629wyjwn5aBrq6HIa' id='DTPACAFeQPE' alt='' width='799' height='750'></img></span></li><li id='DTPACAT77Y9' class=''>Check the repository for the image
+
+<br/></li><li id='DTPACAsX6bC' class=''>sudo docker images petstore
+
+<br/></li><li id='DTPACAsGt4z' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/PTNwxy1BUol4XnLv7iQRRw?a=ncaE7SO6D0t0wy6my4sGWkh9lBsLOmKVrViHl9XAuGwa' id='DTPACAsGt4z' alt='' width='633' height='56'></img></span></li></ul></div><h3 id='DTPACALtmPU'>Prepare Appinternals monitoring Configuration</h3>
+
+<div data-section-style='7'><ul id='DTPACAyS981'><li id='DTPACAkyckP' class='' value='1'>Switch back to the root user
+
+<br/></li><li id='DTPACAthJqc' class=''>demo@JPetDemo:~$ sudo su -<br>root@JPetDemo:~#
+
+<br/></li><li id='DTPACAmPe2K' class=''>Navigate to the directory where the AppInternals agent was installed
+
+<br/></li><li id='DTPACAVP2sq' class=''>cd /opt/Panorama/hedzup/mn/userdata/config/
+
+<br/></li><li id='DTPACANOE4S' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/HVnun1NJrFb844P-CQLIMA?a=iWFuAvBsDcPL6FrXb7ftxppZcE6EFhSShFV9sRrbgjoa' id='DTPACANOE4S' alt='' width='644' height='209'></img></span></li></ul></div><blockquote id='DTPACAms6gR'>To make sure containers have monitoring enabled at launch an initial configuration and mapping is required, see the documentation (<a href="http://doc.steelcentral.net/help/wwhelp/wwhimpl/js/html/wwhelp.htm?context=introduction&amp;topic=quickStartSaas">http://doc.steelcentral.net/help/wwhelp/wwhimpl/js/html/wwhelp.htm?context=introduction&amp;topic=quickStartSaas</a>) for more information. </blockquote>
+
+<div data-section-style='7'><ul id='DTPACAZ6iO1'><li id='DTPACAUSvTI' class='' value='1'>Move back to the SteelCentral SaaS page and select Configure / Configurations
+
+<br/></li><li id='DTPACAZGW5g' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/exaDyhWBRLVqpV5U9ZnB5A?a=M9Ka3CNLzQbLxrXW90RE3VI6Io9yTCcqqVBMsaQpKj8a' id='DTPACAZGW5g' alt='' width='800' height='147'></img></span></li><li id='DTPACAfQcDk' class=''>Select Define a Configuration, provide a name (petstore) and define Data Collection Settings (Normal), click Save
+
+<br/></li><li id='DTPACAkb8Nn' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/UzRL2wIZfXhCMIMbKxIJug?a=76EfrSabht0QWt8ONpoF5oiaFwFREI8wrwXId4bHEEYa' id='DTPACAkb8Nn' alt='' width='800' height='324'></img></span></li><li id='DTPACA180nr' class=''>Reopen the petstore configuration and select Download by clicking the Edit button
+
+<br/></li><li id='DTPACABITLP' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/kBbCcjPsdahjIr10cAgBtw?a=NfWOziNE2sHP1nRdxlPpE7AdYHjawtOLAElGDGPmhkMa' id='DTPACABITLP' alt='' width='670' height='228'></img></span></li><li id='DTPACAUOqYf' class=''>Create a new file to hold the configuration
+
+<br/></li><li id='DTPACA9XEap' class=''>touch petstore.json
+
+<br/></li><li id='DTPACAxENHV' class=''>Use a text editor to copy the contents from the local file to the newly created petstore.json, edit initial-mapping.
+
+<br/></li><li id='DTPACAEpiQh' class=''>
+
+<br/></li><li id='DTPACAKWaOz' class=''>vim petstore.json<br>vim initial-mapping
+
+<br/></li></ul></div><div data-section-style='7'><ul id='DTPACAx372s'><li id='DTPACAMNtVR' class='' value='1'>Paste the below lines to the initial-mapping file and save
+
+<br/></li><li id='DTPACAYslqW' class=''>include:Java_*petstore* config:petstore.json
+
+<br/></li><li id='DTPACA5pEdk' class=''>Restart the AppInternals agent
+
+<br/></li><li id='DTPACAIUXrN' class=''>/opt/Panorama/hedzup/mn/bin/agent restart
+
+<br/></li><li id='DTPACA4dcFX' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/ztbDRxfRUR0YRGaq5fc6hg?a=vh7yw31BiEiv230aARLLbalWaslyvy3b8OWjveGnDcca' id='DTPACA4dcFX' alt='' width='677' height='287'></img></span></li></ul></div><h3 id='DTPACAprvkD'>Start instance of petclinic</h3>
+
+Run a single instance of the Petclinic application with a mount point attached for the AppInternals agent installation.<br/>
+
+<div data-section-style='7'><ul id='DTPACAUIG8x'><li id='DTPACAZkZeU' class='' value='1'>Create a new YAML file in the home directory of the demo user
+
+<br/></li><li id='DTPACADX5PA' class=''>cd ~<br>touch deploy_petstore.yaml<br>vim deploy_petstore.yaml
+
+<br/></li><li id='DTPACAOSdLO' class=''>Paste the below lines to the YAML file by typing i to insert, save again with Escape, :wq and Enter
+
+<br/></li></ul></div><pre id='DTPACACWaii'>apiVersion: extensions/v1beta1<br>kind: Deployment<br>metadata:<br>  labels:<br>    run: petstore<br>  name: petstore<br>spec:<br>  replicas: 1<br>  template:<br>    metadata:<br>      labels:<br>        run: petstore<br>    spec:<br>      containers:<br>      - image: petstore:latest<br>        imagePullPolicy: Never<br>        name: petstore<br>        env:<br>        - name: JAVA_TOOL_OPTIONS<br>          value: "-agentpath:/opt/Panorama/hedzup/mn/lib/librpilj64.so"<br>        ports:<br>        - containerPort: 8080<br>          protocol: TCP<br>        volumeMounts:<br>        - mountPath: /opt/Panorama<br>          name: panorama<br>      volumes:<br>      - name: panorama<br>        hostPath:<br>          path: /opt/Panorama<br>          type: Directory</pre>
+
+<div data-section-style='7'><ul id='DTPACAd3oJS'><li id='DTPACANRked' class='' value='1'>Create new deployment and check the result
+
+<br/></li><li id='DTPACA00uGb' class=''><code>kubectl create -f deploy_petstore.yaml<br>kubectl get po</code>
+
+<br/></li><li id='DTPACACAow9' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/vjIJ4jfX5mTPVWatJNL5iQ?a=TMk8rp0WMBxMFj9LigNC5S6U2cJapc5eUATNUlGFCnka' id='DTPACACAow9' alt='' width='572' height='94'></img></span></li><li id='DTPACAQms02' class=''>Expose the deployed code ouside of the kubernetes cluster 
+
+<br/></li><li id='DTPACAOjvuv' class=''>kubectl expose deployment petstore --type=NodePort --name=petstore
+
+<br/></li><li id='DTPACAU1ZyF' class=''>View service details 
+
+<br/></li><li id='DTPACAqS3Ki' class=''>kubectl <code>describe services petstore</code>
+
+<br/></li><li id='DTPACARBloF' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/9TJVdQqEXU8lHpV3NCvl5A?a=ZkCRBs1VXad0wkQDTyNMAvLgVCSK2pJIhHnkOPnvPOMa' id='DTPACARBloF' alt='' width='627' height='258'></img></span></li><li id='DTPACA8Qoi6' class=''>Now access the running application using the Endpoint, the IP with port 8080 and the host IP with the NodePort value. In all cases you should see a webpage returned which means the deployment is running and accessible.
+
+<br/></li><li id='DTPACA8eXir' class=''>curl 192.168.236.144:8080<br>curl 10.101.119.5:8080<br>curl 10.0.0.6:31365
+
+<br/></li></ul></div><h3 id='DTPACA2Nrgh'>configure firewall</h3>
+
+To access the application from the internet on the NodePort the Azure configuration needs to be set to allow the port.<br/>
+
+<div data-section-style='7'><ul id='DTPACAdoRmK'><li id='DTPACAuAcMb' class='' value='1'>Login to the Azure Portal and click Home/Virtual machines/jpetdemo, select Networking
+
+<br/></li><li id='DTPACAiqT8K' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/nbwO-_085k93HSRWu6J1JQ?a=ZwTAIzSnBynKWXTpVmFsxrk9aEb7VIfdr9amWYhB2sga' id='DTPACAiqT8K' alt='' width='800' height='233'></img></span></li><li id='DTPACAyhiq8' class=''>Click 'Add inbound port rule'
+
+<br/></li><li id='DTPACArCLum' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/6BiCdH_NnmTUl93qJB_F2g?a=rinBPScQ6TSdvicNaS2RZ8AiUajMDb5QJWaErwaowt0a' id='DTPACArCLum' alt='' width='792' height='286'></img></span></li><li id='DTPACAHKUgR' class=''>Add a rule with the NodePort port number
+
+<br/></li><li id='DTPACAkcUne' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/XY6r0YAjR6MbDgbUa0WOuQ?a=YdTNVZIA6yu9mQOHyvPjauwNCOwaGTbHav5sZaUIa2Aa' id='DTPACAkcUne' alt='' width='300' height='559'></img></span></li><li id='DTPACAu1ewg' class=''>After the rule is created use the external IP and NodePort in your browser to open the Petstore site
+
+<br/></li><li id='DTPACAdpnQt' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/wPXCJRdHEQSqmOp-s3wW8A?a=t04tz2P8v1PSLyZVDMw0aiJQwWYKBx7wMRg6tNKcaeAa' id='DTPACAdpnQt' alt='' width='800' height='409'></img></span></li></ul></div><h3 id='DTPACAc8OJj'>Monitoring Petstore</h3>
+
+If all went well the application should now be running while being monitored by AppInternals.<br/>
+
+<div data-section-style='7'><ul id='DTPACATdnAf'><li id='DTPACAIAIwE' class='' value='1'>Login to the Saas backend to review the Agent Details, click Configure / Agent List and pick the running agent
+
+<br/></li><li id='DTPACAQKS7C' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/NkjRRpdtFHo0fP0YAlm2Og?a=btbPFbiNsi5Xah4YFd3K5gjOKlwLrkMzccuRV9Qoaa8a' id='DTPACAQKS7C' alt='' width='800' height='292'></img></span></li></ul></div><div data-section-style='7'><ul id='DTPACA35xgi'><li id='DTPACAyHZ1o' class='' value='1'>Verify the petstore.jar process has status Instrumented
+
+<br/></li><li id='DTPACAY5ol8' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/6vyYNZkFFuG8kMH8LjIZzQ?a=SXpaux1ELAf65a82Fd9PzEibUsMb57JIyCl09B6yPTsa' id='DTPACAY5ol8' alt='' width='800' height='56'></img></span></li></ul></div><div data-section-style='7'><ul id='DTPACAfdKnO'><li id='DTPACAHOJcc' class='' value='1'>If the configuration is running navigate through the application to generate traffic and after a while check the Overview tab in SteelCentral
+
+<br/></li><li id='DTPACAa1h4h' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/3VGZNAgKx5bLlQGctP-0fw?a=aodHO9w9lDFpaL6EiGAPS3Fgl6AU32BWzfuua8K4hnka' id='DTPACAa1h4h' alt='' width='800' height='217'></img></span></li><li id='DTPACAM46IJ' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/YqfmJWbh1QSR9wKDaNg4yA?a=g9WMzMDmIsotaOYg1ar4Fi3FFtgaZA1oWRwTkITP3aka' id='DTPACAM46IJ' alt='' width='800' height='205'></img></span></li><li id='DTPACA9Te5D' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/GUOreOAaA638ynOjhvdPAw?a=oeoSxtKrkdtL6US1PNaiNaB41z3zFojrFP39TaTTMnka' id='DTPACA9Te5D' alt='' width='800' height='179'></img></span></li><li id='DTPACAcDXqA' class=''>Check the Application Map tab to review the structure of the infrastructure showing the container running the Java application linked to a hsqldb
+
+<br/></li><li id='DTPACA3wAqo' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/tmKFewCAjnbpEtUTai0XRA?a=RaOlPQREbegoM9JXPK9GikERsQeGVshzPegX2LlgWuca' id='DTPACA3wAqo' alt='' width='800' height='328'></img></span></li><li id='DTPACAeSiCK' class=''>Click on the Search tab and enter username = '*', click on Analysis and select Navigator, click Search
+
+<br/></li><li id='DTPACA10J7e' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/WlM9A5VNCGuBglXvQGnGIQ?a=urtF2aGa4xEMvN93hIl5JSwkstJNr2aXBpj5BYVDDvwa' id='DTPACA10J7e' alt='' width='800' height='178'></img></span></li><li id='DTPACAIKgXy' class=''>Review the generated report and use it to filter 
+
+<br/></li><li id='DTPACA3r0nE' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/y6ung63OGJILsqoXxPlwvw?a=1iNAMMaXX0qC3nHcZWM1kDY14OBITbkDwCBI0Jg1gREa' id='DTPACA3r0nE' alt='' width='800' height='587'></img></span></li><li id='DTPACANqpNQ' class=''>For example click on the Exception Count which opens a new tab showing more details on all the exceptions
+
+<br/></li><li id='DTPACAO6SjY' class=''><span data-section-style='11' style='max-width:100%'><img src='https://quip.com/blob/DTPAAAKjq7U/sSahmhG53_AqIIfathtCyA?a=6tzEOdgB4uFsgpmNnYBVZ24MTraHSbKsrQUaKfKVCYca' id='DTPACAO6SjY' alt='' width='800' height='447'></img></span></li></ul></div><h2 id='DTPACAzFOZa'>Feel free to navigate further! </h2>
+
+<br/>
+
+<br/>
+
+<br/>
+
+</body></html>
